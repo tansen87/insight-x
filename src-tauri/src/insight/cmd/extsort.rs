@@ -125,7 +125,9 @@ pub async fn sort_csv(
 
   for l in sorted_line_rdr.lines() {
     line.clone_from(&l?);
-    let Ok(position) = atoi_simd::parse::<u64>(&line.as_bytes()[line.len() - width..]) else {
+    let Ok(position) =
+      atoi_simd::parse::<u64, false, false>(&line.as_bytes()[line.len() - width..])
+    else {
       return Err(anyhow!("Failed to retrieve position: invalid integer"));
     };
 
