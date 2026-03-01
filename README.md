@@ -4,6 +4,8 @@ English | [中文](./README_CN.md)
 
 > insight-x is a Tauri based data processing toolbox designed to simplify data operations and management. It provides an intuitive graphical user interface (GUI). Supports processing of multiple file formats, including Excel, CSV, Parquet, etc. Users can complete complex data processing tasks such as data queries, transformations, merges, joins, sorts, slices, format conversions, etc. through simple operations.
 
+*If you don't need SQL, please refer to [csv-wings](https://github.com/tansen87/csv-wings)*
+
 
 ## 📷ScreenShot
 * Polars SQL for query
@@ -42,7 +44,7 @@ English | [中文](./README_CN.md)
 
 
 ## 🍖How to use?
-* For more details, please refer to [release](https://github.com/tansen87/InsightSQL/releases/)
+* For more details, please refer to [release](https://github.com/tansen87/insight-x/releases/)
 
 
 ## 🏃‍Runtime Environment
@@ -54,7 +56,7 @@ English | [中文](./README_CN.md)
 ## 🚀Development
 1. Clone this repositories
    ```bash
-   git clone https://github.com/tansen87/InsightSQL.git
+   git clone https://github.com/tansen87/insight-x.git
    ```
 
 2. cd to the directory of the project
