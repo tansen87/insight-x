@@ -1,10 +1,10 @@
 <h1>insight-x</h1>
 
+### 此项目不再更新,请参考 [csv wings](https://github.com/tansen87/csv-wings) & [Easy Csv](https://github.com/tansen87/easy-csv).
+
 [English](./README.md) | 中文
 
 > insight-x是一个基于Tauri的数据处理工具箱，旨在简化数据操作和管理。它提供了一个直观的图形用户界面(GUI)。支持多种文件格式的处理，包括 Excel、CSV 和 Parquet 等。用户可以通过简单的操作完成复杂的数据处理任务，如数据查询、转换、合并、连接、排序、切片、格式转换等。
-
-*如果你不需要SQL,请参考 [csv-wings](https://github.com/tansen87/csv-wings)*
 
 
 ## 📷截图
@@ -81,8 +81,3 @@
 
 ### 演示视频
 * [bilibili](https://www.bilibili.com/video/BV1XS411c7zd/?spm_id_from=333.999.0.0&vd_source=5ee5270944c6e7a459e1311330bf455c) (视频很久未更新了)
-
-
-### See also
-* [tauri-pure-admin](https://github.com/pure-admin/tauri-pure-admin)
-* [qsv](https://github.com/jqnatividad/qsv)
