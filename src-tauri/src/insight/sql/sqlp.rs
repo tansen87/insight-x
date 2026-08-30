@@ -6,13 +6,15 @@ use std::{
   num::NonZero,
   path::{Path, PathBuf},
   sync::Arc,
+  time::Instant,
 };
 
 use anyhow::{Result, anyhow};
 use polars::{
   io::SerReader,
   prelude::{
-    CsvEncoding, CsvWriter, DataFrame, IntoLazy, JsonFormat, JsonReader, JsonWriter, LazyCsvReader, LazyFileListReader, LazyFrame, OptFlags, ParquetWriter, PlRefPath, SerWriter
+    CsvEncoding, CsvWriter, DataFrame, IntoLazy, JsonFormat, JsonReader, JsonWriter, LazyCsvReader,
+    LazyFileListReader, LazyFrame, OptFlags, ParquetWriter, PlRefPath, SerWriter,
   },
   sql::SQLContext,
 };
@@ -32,6 +34,10 @@ struct QueryResult {
   data: String,
   schema: HashMap<String, String>,
   columns: Vec<String>,
+  /// 结果集总行数(不受limit截断影响)
+  total_rows: usize,
+  /// 查询耗时(ms)
+  elapsed_ms: u128,
 }
 
 trait FileWriter {
@@ -142,12 +148,14 @@ async fn prepare_query(
   file_path: Vec<&str>,
   sql_query: String,
   varchar: bool,
-  limit: bool,
+  limit: Option<usize>,
   write: bool,
   write_format: &str,
   output_path: String,
   skiprows: usize,
 ) -> Result<String> {
+  let start_time = Instant::now();
+
   let infer_schema_length = match varchar {
     true => 0,
     false => 10000,
@@ -262,15 +270,18 @@ async fn prepare_query(
       .iter()
       .map(|s| s.to_string())
       .collect();
+    let total_rows = df.height();
     let data_json = match limit {
-      true => query_df_to_json(df.head(Some(500)))?,
-      false => query_df_to_json(df)?,
+      Some(n) => query_df_to_json(df.head(Some(n)))?,
+      None => query_df_to_json(df)?,
     };
 
     let res = QueryResult {
       data: data_json,
       schema,
       columns,
+      total_rows,
+      elapsed_ms: start_time.elapsed().as_millis(),
     };
     Ok(serde_json::to_string(&res)?)
   }
@@ -302,7 +313,7 @@ pub async fn query(
   path: String,
   sql_query: String,
   varchar: bool,
-  limit: bool,
+  limit: Option<usize>,
   write: bool,
   write_format: String,
   output_path: String,
@@ -318,7 +329,7 @@ pub async fn query(
     write,
     &write_format,
     output_path,
-    skiprows
+    skiprows,
   )
   .await
   {

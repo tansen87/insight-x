@@ -25,6 +25,8 @@ const pureSetting = useSettingStoreHook();
 const { $storage } = useGlobal<GlobalPropertiesApi>();
 const appWindow = getCurrentWindow();
 const handleMouseDown = e => {
+  // 仅允许通过顶部导航栏拖动窗口,其余区域不做窗口拖动
+  if (!e.target.closest(".navbar")) return;
   if (
     e.target.closest(".sub-menu-icon") ||
     e.target.closest(".set-icon") ||
@@ -35,6 +37,7 @@ const handleMouseDown = e => {
     e.target.closest(".el-switch") ||
     e.target.closest(".el-tooltip__trigger") ||
     e.target.closest(".el-card__body") ||
+    e.target.closest(".no-drag") ||
     e.target.closest(".el-icon") ||
     e.target.closest(".el-dialog") ||
     e.target.closest(".el-menu-item") ||

@@ -2,6 +2,7 @@ import { computed, reactive, ref } from "vue";
 import { open } from "@tauri-apps/plugin-dialog";
 import { invoke } from "@tauri-apps/api/core";
 import { message } from "@/utils/message";
+import { t } from "@/locales";
 import { useSqlHistory } from "@/store/modules/sqlHistory";
 import fileIcon from "@iconify-icons/ri/file-line";
 import fileTextIcon from "@iconify-icons/ri/file-text-line";
@@ -19,11 +20,23 @@ import { useSkiprows } from "@/store/modules/options";
 
 const skiprows = useSkiprows();
 
+export interface FileTreeNode {
+  label: string;
+  key: string;
+  type: "file" | "field";
+  ext?: string;
+  dtype?: string;
+  fullPath?: string;
+  fullFileName?: string;
+  children?: FileTreeNode[];
+}
+
 export function useSqlFileTree() {
   const sqlHistory = useSqlHistory();
   const contextMenuVisible = ref(false);
   const contextMenuPosition = reactive({ x: 0, y: 0 });
   const contextMenuItem = ref<any>(null);
+  const searchTerm = ref("");
 
   const viewFileMeta = computed(() => {
     if (!sqlHistory.path) return [];
@@ -36,7 +49,7 @@ export function useSqlFileTree() {
     });
   });
 
-  const fileTreeData = computed(() => {
+  const allFileTreeData = computed<FileTreeNode[]>(() => {
     return viewFileMeta.value
       .map(fileMeta => {
         const schema = sqlHistory.dtypesByFile[fileMeta.fullFileName];
@@ -46,7 +59,7 @@ export function useSqlFileTree() {
           label: field,
           dtype,
           key: `${fileMeta.fullFileName}-${field}`,
-          type: "field"
+          type: "field" as const
         }));
 
         return {
@@ -54,12 +67,38 @@ export function useSqlFileTree() {
           ext: fileMeta.ext,
           children,
           key: fileMeta.fullFileName,
-          type: "file",
-          fullPath: fileMeta.fullPath
+          type: "file" as const,
+          fullPath: fileMeta.fullPath,
+          fullFileName: fileMeta.fullFileName
         };
       })
-      .filter(Boolean);
+      .filter(Boolean) as FileTreeNode[];
   });
+
+  /** 按搜索词过滤：命中文件名保留整表，否则只保留命中的字段 */
+  const fileTreeData = computed<FileTreeNode[]>(() => {
+    const term = searchTerm.value.trim().toLowerCase();
+    if (!term) return allFileTreeData.value;
+
+    return allFileTreeData.value
+      .map(node => {
+        const nameHit = node.label.toLowerCase().includes(term);
+        if (nameHit) return node;
+
+        const children = (node.children || []).filter(child =>
+          child.label.toLowerCase().includes(term)
+        );
+        if (children.length === 0) return null;
+        return { ...node, children };
+      })
+      .filter(Boolean) as FileTreeNode[];
+  });
+
+  const expandedKeys = computed(() =>
+    searchTerm.value.trim() ? fileTreeData.value.map(n => n.key) : []
+  );
+
+  const fileCount = computed(() => allFileTreeData.value.length);
 
   const getFileIcon = (ext: string) => {
     switch (ext) {
@@ -102,6 +141,24 @@ export function useSqlFileTree() {
       : getFieldIcon(node.dtype || "");
   };
 
+  /** 拉取单个文件的 schema */
+  async function loadSchema(path: string) {
+    const fullFileName = path.split(/[/\\]/).pop() || path;
+    const rawResult = await invoke("query", {
+      path,
+      sqlQuery: `SELECT * FROM "${fullFileName}" LIMIT 10`,
+      varchar: false,
+      limit: 10,
+      write: false,
+      writeFormat: "csv",
+      outputPath: "",
+      skiprows: skiprows.skiprows
+    });
+    const result =
+      typeof rawResult === "string" ? JSON.parse(rawResult) : rawResult;
+    sqlHistory.dtypesByFile[fullFileName] = result.schema;
+  }
+
   async function selectFile() {
     const selected = await open({
       multiple: true,
@@ -128,26 +185,38 @@ export function useSqlFileTree() {
         if (sqlHistory.dtypesByFile[fullFileName]) return;
 
         try {
-          const rawResult = await invoke("query", {
-            path,
-            sqlQuery: `SELECT * FROM "${fullFileName}" LIMIT 10`,
-            varchar: false,
-            limit: true,
-            write: false,
-            writeFormat: "csv",
-            outputPath: "",
-            skiprows: skiprows.skiprows
-          });
-          const result =
-            typeof rawResult === "string" ? JSON.parse(rawResult) : rawResult;
-          sqlHistory.dtypesByFile[fullFileName] = result.schema;
+          await loadSchema(path);
         } catch (err) {
-          message(`Failed to load schema for ${fullFileName}: ${err}`, {
-            type: "error"
-          });
+          message(
+            t("sql.message.loadSchemaFailed", {
+              file: fullFileName,
+              error: String(err)
+            }),
+            { type: "error" }
+          );
         }
       })
     );
+  }
+
+  /** 文件被替换后 schema 可能过期，手动刷新 */
+  async function refreshSchema(item: any) {
+    const path = item?.fullPath;
+    if (!path) return;
+    try {
+      await loadSchema(path);
+      message(
+        t("sql.message.refreshed", { file: item.fullFileName || item.label }),
+        {
+          type: "success"
+        }
+      );
+    } catch (err) {
+      message(t("sql.message.refreshFailed", { error: String(err) }), {
+        type: "error"
+      });
+    }
+    closeContextMenu();
   }
 
   function closeContextMenu() {
@@ -167,10 +236,10 @@ export function useSqlFileTree() {
     if (!contextMenuItem.value?.fullPath) return;
     try {
       await navigator.clipboard.writeText(contextMenuItem.value.fullPath);
-      message("Copied file path", { type: "success" });
+      message(t("sql.message.copiedPath"), { type: "success" });
       closeContextMenu();
     } catch (err) {
-      message("Failed to copy", { type: "error" });
+      message(t("sql.message.copyFailed"), { type: "error" });
     }
   }
 
@@ -181,10 +250,10 @@ export function useSqlFileTree() {
       item.type === "file" ? item.fullFileName || item.label : item.label;
     try {
       await navigator.clipboard.writeText(textToCopy);
-      message("Copied file name", { type: "success" });
+      message(t("sql.message.copiedFileName"), { type: "success" });
       closeContextMenu();
     } catch (err) {
-      message("Failed to copy", { type: "error" });
+      message(t("sql.message.copyFailed"), { type: "error" });
     }
   }
 
@@ -192,15 +261,27 @@ export function useSqlFileTree() {
     if (!contextMenuItem.value?.label) return;
     try {
       await navigator.clipboard.writeText(contextMenuItem.value.label);
-      message("Copied field name", { type: "success" });
+      message(t("sql.message.copiedFieldName"), { type: "success" });
       closeContextMenu();
     } catch (err) {
-      message("Failed to copy", { type: "error" });
+      message(t("sql.message.copyFailed"), { type: "error" });
     }
   }
 
-  function deleteFile() {
-    const item = contextMenuItem.value;
+  /** 复制带引号的字段名，可直接粘贴进 SQL */
+  async function copyQuotedFieldName() {
+    if (!contextMenuItem.value?.label) return;
+    try {
+      await navigator.clipboard.writeText(`"${contextMenuItem.value.label}"`);
+      message(t("sql.message.copiedQuoted"), { type: "success" });
+      closeContextMenu();
+    } catch (err) {
+      message(t("sql.message.copyFailed"), { type: "error" });
+    }
+  }
+
+  /** 按节点移除数据源，不依赖右键菜单状态（供节点上的移除按钮使用） */
+  function removeFile(item: any) {
     if (!item || item.type !== "file") return;
 
     const fullFileName = item.fullFileName || item.label;
@@ -209,10 +290,15 @@ export function useSqlFileTree() {
     const paths = sqlHistory.path.split("|").filter(p => p !== fullPath);
     sqlHistory.path = paths.join("|");
 
-    // 删除schema缓存
     delete sqlHistory.dtypesByFile[fullFileName];
 
-    message(`Deleted "${fullFileName}"`, { type: "success" });
+    message(t("sql.message.deleted", { file: fullFileName }), {
+      type: "success"
+    });
+  }
+
+  function deleteFile() {
+    removeFile(contextMenuItem.value);
     closeContextMenu();
   }
 
@@ -234,10 +320,14 @@ export function useSqlFileTree() {
     // 数据
     viewFileMeta,
     fileTreeData,
+    fileCount,
+    searchTerm,
+    expandedKeys,
     getNodeIcon,
 
     // 文件操作
     selectFile,
+    refreshSchema,
 
     // 右键菜单状态
     contextMenuVisible,
@@ -250,6 +340,8 @@ export function useSqlFileTree() {
     copyPath,
     copyFileName,
     copyFieldName,
+    copyQuotedFieldName,
+    removeFile,
     deleteFile
   };
 }
