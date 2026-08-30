@@ -4,7 +4,6 @@
 )]
 
 use insight::command;
-use insight::flow;
 use insight::sql;
 
 use insight::cmd::apply;
@@ -70,7 +69,6 @@ fn main() {
       command::inter_headers,
       command::dupli_headers,
       command::to_json,
-      flow::flow,
       apply::apply,
       cat::concat,
       convert::excel_to_csv::map_excel_sheets,

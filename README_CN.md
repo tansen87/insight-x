@@ -11,9 +11,6 @@
 * Polars SQL for query
   ![sqlp.gif](/docs/img/sqlp.gif)
 
-* Flow
-  ![flow.gif](/docs/img/flow.gif)
-
 * command
   ![cmd.png](/docs/img/cmd.png)
 
@@ -22,7 +19,6 @@
 | Function | Description |
 | ------- | ----------- |
 | [SQL](./src-tauri/src/lib/cmd/sqlp.rs) | 对多个文件执行Polars SQL查询 (支持Excel, CSV, Parquet, Json, Jsonl) |
-| [Flow](./src-tauri/src/lib/flow/mod.rs) | CSV工作流 |
 | [Apply](./docs/apply.md) | 对CSV的列操作 |
 | [Cat](./docs/cat.md) | 将多个CSV或Excel文件合并为一个CSV或xlsx文件 |
 | [Convert](./src-tauri/src/lib/cmd/convert/mod.rs) | 文件类型转换 (access转csv, 格式化csv, csv转xlsx, dbf转csv, excel转csv, json转csv, jsonl转csv) |
@@ -49,7 +45,7 @@
 ## 🏃‍运行环境
 * Node.js 20.19+
 * pnpm 10.0+
-* 🦀Rust 1.91.1+
+* Rust 1.91.0+
 
 
 ## 🚀开发

@@ -11,9 +11,6 @@ English | [中文](./README_CN.md)
 * Polars SQL for query
   ![sqlp.gif](/docs/img/sqlp.gif)
 
-* Flow
-  ![flow.gif](/docs/img/flow.gif)
-
 * command
   ![cmd.png](/docs/img/cmd.png)
 
@@ -22,7 +19,6 @@ English | [中文](./README_CN.md)
 | Function | Description |
 | ------- | ----------- |
 | [SQL](./src-tauri/src/lib/cmd/sqlp.rs) | Execute Polars SQL queries against several files (Support Excel, CSV, Parquet, Json, Jsonl) |
-| [Flow](./src-tauri/src/lib/flow/mod.rs) | Csv Flow |
 | [Apply](./docs/apply.md) | Apply series of string, math transformations to given CSV column/s |
 | [Cat](./docs/cat.md) | Merge multiple CSV or Excel files into one CSV or xlsx file (Support Polars and CSV engine) |
 | [Convert](./src-tauri/src/lib/cmd/convert/mod.rs) | File type conversion (access to csv, format csv, csv to xlsx, dbf to csv, excel to csv, json to csv, jsonl to csv) |
@@ -50,7 +46,7 @@ English | [中文](./README_CN.md)
 ## 🏃‍Runtime Environment
 * Node.js 20.19+
 * pnpm 10.0+
-* 🦀Rust 1.91.1+
+* Rust 1.91.0+
 
 
 ## 🚀Development

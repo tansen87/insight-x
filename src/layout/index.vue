@@ -35,7 +35,6 @@ const handleMouseDown = e => {
     e.target.closest(".el-switch") ||
     e.target.closest(".el-tooltip__trigger") ||
     e.target.closest(".el-card__body") ||
-    e.target.closest(".draggable-node") ||
     e.target.closest(".el-icon") ||
     e.target.closest(".el-dialog") ||
     e.target.closest(".el-menu-item") ||
@@ -43,8 +42,6 @@ const handleMouseDown = e => {
     e.target.closest(".el-tabs") ||
     e.target.closest(".el-table") ||
     e.target.closest(".el-link__inner") ||
-    e.target.closest(".vue-flow__handle") ||
-    e.target.closest(".vue-flow__edge-interaction") ||
     e.target.closest(".el-input__inner")
   ) {
     return;
